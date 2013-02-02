@@ -1,12 +1,12 @@
 require "test/unit"
-require_relative "../lib/triex"
+require_relative "../lib/triez"
 
 GC.stress
 
-class TriexTest < Test::Unit::TestCase
+class TriezTest < Test::Unit::TestCase
   def test_hat_trie
-    t = Triex.hat
-    assert_equal Triex::HatTrie, t.class
+    t = Triez.hat
+    assert_equal Triez::HatTrie, t.class
 
     t['万塘路一锅鸡'] = (1 << 40)
     t['万塘路'] = (1 << 41)

@@ -58,6 +58,10 @@ static VALUE hat_check(VALUE self, VALUE key) {
     return vt ? Qtrue : Qfalse;
 }
 
+static VALUE hat_iter(VALUE self) {
+    
+}
+
 static void valued_hat_mark(void* p) {
 	hattrie_t* t = (hattrie_t*)p;
 	/*
@@ -78,23 +82,23 @@ static VALUE marisa_alloc(VALUE self) {
 #define DEF(k,n,f,c) rb_define_method(k,n,RUBY_METHOD_FUNC(f),c)
 
 extern "C"
-void Init_triex() {
-	VALUE triex = rb_define_module("Triex");
+void Init_triez() {
+	VALUE triez = rb_define_module("Triez");
     u8_enc = rb_utf8_encoding();
     bin_enc = rb_ascii8bit_encoding();
 
-	hat_class = rb_define_class_under(triex, "HatTrie", rb_cObject);
+	hat_class = rb_define_class_under(triez, "HatTrie", rb_cObject);
 	rb_define_alloc_func(hat_class, hat_alloc);
-	rb_define_singleton_method(triex, "hat", RUBY_METHOD_FUNC(hat_alloc), 0);
+	rb_define_singleton_method(triez, "hat", RUBY_METHOD_FUNC(hat_alloc), 0);
     DEF(hat_class, "[]=", hat_set, 2);
     DEF(hat_class, "[]", hat_get, 1);
     DEF(hat_class, "has_key?", hat_check, 1);
 
-	valued_hat_class = rb_define_class_under(triex, "ValuedHatTrie", hat_class);
+	valued_hat_class = rb_define_class_under(triez, "ValuedHatTrie", hat_class);
 	rb_define_alloc_func(valued_hat_class, valued_hat_alloc);
-	rb_define_singleton_method(triex, "valued_hat", RUBY_METHOD_FUNC(valued_hat_alloc), 0);
+	rb_define_singleton_method(triez, "valued_hat", RUBY_METHOD_FUNC(valued_hat_alloc), 0);
 
-	marisa_class = rb_define_class_under(triex, "MarisaTrie", rb_cObject);
+	marisa_class = rb_define_class_under(triez, "MarisaTrie", rb_cObject);
 	rb_define_alloc_func(marisa_class, marisa_alloc);
-	rb_define_singleton_method(triex, "marisa", RUBY_METHOD_FUNC(marisa_alloc), 0);
+	rb_define_singleton_method(triez, "marisa", RUBY_METHOD_FUNC(marisa_alloc), 0);
 }

@@ -10,13 +10,13 @@ This is Ruby binding for modern trie implementations, unicode aware, providing H
 ## Install
 
 ``` bash
-gem ins triex
+gem ins triez
 ```
 
 ## Usage
 
 ``` ruby
-require 'triex'
+require 'triez'
 ```
 
 ---

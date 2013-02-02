@@ -2,7 +2,7 @@ require "rbconfig"
 require "fileutils"
 include FileUtils
 
-so_file = "ext/triex.#{RbConfig::CONFIG['DLEXT']}"
+so_file = "ext/triez.#{RbConfig::CONFIG['DLEXT']}"
 src_files = Dir.glob('ext/*.{h,c,cc}')
 vendor_files = %w[hat-trie marisa-trie]
 
@@ -31,7 +31,7 @@ end
 
 desc "run tests"
 task :default => so_file do
-  require_relative "test/triex_test.rb"
+  require_relative "test/triez_test.rb"
 end
 
 desc "build ext"
