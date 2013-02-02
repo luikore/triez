@@ -17,8 +17,12 @@ task :glob_src => vendor_files do
   cp 'marisa-trie/COPYING', 'ext/marisa-trie'
 end
 
-desc "download vendor files"
-file vendor_files do
-  'git clone git://github.com/dcjones/hat-trie.git'
-  'svn checkout http://marisa-trie.googlecode.com/svn/trunk/ marisa-trie'
+desc "download hat source"
+file 'hat-trie' do
+  sh 'git clone git://github.com/dcjones/hat-trie.git'
+end
+
+desc "download marisa source"
+file 'marisa-trie' do
+  sh 'svn checkout http://marisa-trie.googlecode.com/svn/trunk/ marisa-trie'
 end
