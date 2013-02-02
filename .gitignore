@@ -6,4 +6,5 @@
 *.dll
 *.bundle
 Makefile
+.DS_Store
 
