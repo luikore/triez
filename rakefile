@@ -39,3 +39,10 @@ file so_file => src_files do
   cd 'ext'
   sh 'make'
 end
+
+desc "clean ext"
+task :clean do
+  cd 'ext'
+  sh 'make clean'
+  rm Dir.glob 'build/*.{o,a}'
+end
