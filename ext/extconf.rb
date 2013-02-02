@@ -21,9 +21,10 @@ include FileUtils
 cd File.dirname(__FILE__) + '/build'
 unless File.exist?('libtries.a')
   cc = ENV['CC'] || RbConfig::CONFIG['CC']
+  cc = [cc, '-O3', '-c']
   ar = RbConfig::CONFIG['AR']
   ar = 'ar' unless File.exist?(ar)
-  sh cc, '-c', '-I..', *Dir.glob("../hat-trie/*.c")
-  sh cc, '-c', '-Imarisa-trie', *Dir.glob("../marisa-trie/**/*.cc")
+  sh *cc, '-I..', *Dir.glob("../hat-trie/*.c")
+  sh *cc, '-Imarisa-trie', *Dir.glob("../marisa-trie/**/*.cc")
   sh ar, '-r', 'libtries.a', *Dir.glob("*.o")
 end

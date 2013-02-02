@@ -52,14 +52,30 @@ static VALUE hat_get(VALUE self, VALUE key) {
 static VALUE hat_check(VALUE self, VALUE key) {
     hattrie_t* p;
     Data_Get_Struct(self, hattrie_t, p);
-    
+
     key = unify_key(key);
     value_t* vt = hattrie_tryget(p, RSTRING_PTR(key), RSTRING_LEN(key));
     return vt ? Qtrue : Qfalse;
 }
 
+static VALUE hat_del(VALUE self, VALUE key) {
+    hattrie_t* p;
+    Data_Get_Struct(self, hattrie_t, p);
+
+    key = unify_key(key);
+    const char* s = RSTRING_PTR(key);
+    size_t len = RSTRING_LEN(key);
+    value_t* vt = hattrie_tryget(p, s, len);
+    if (vt) {
+        hattrie_del(p, RSTRING_PTR(key), RSTRING_LEN(key));
+        return LL2NUM(*vt);
+    } else {
+        return Qnil;
+    }
+}
+
 static VALUE hat_iter(VALUE self) {
-    
+
 }
 
 static void valued_hat_mark(void* p) {
@@ -92,6 +108,7 @@ void Init_triez() {
 	rb_define_singleton_method(triez, "hat", RUBY_METHOD_FUNC(hat_alloc), 0);
     DEF(hat_class, "[]=", hat_set, 2);
     DEF(hat_class, "[]", hat_get, 1);
+    DEF(hat_class, "delete", hat_del, 1);
     DEF(hat_class, "has_key?", hat_check, 1);
 
 	valued_hat_class = rb_define_class_under(triez, "ValuedHatTrie", hat_class);
