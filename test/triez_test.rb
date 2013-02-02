@@ -21,5 +21,9 @@ class TriezTest < Test::Unit::TestCase
     assert_equal v1, t.delete('万塘路一锅鸡')
     assert_equal nil, t['万塘路一锅鸡']
     assert_equal v2, t['万塘路']
+
+    a = []
+    t._internal_search '', 0, -> k, v { a << [k,v] }
+    assert_equal [['万塘路', v2]], a
   end
 end
