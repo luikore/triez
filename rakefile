@@ -7,7 +7,7 @@ vendor_files = %w[hat-trie marisa-trie]
 desc "glob src for gem redist"
 task :glob_src => vendor_files do
   hat_files = Dir.glob('hat-trie/src/*.{h,c}').select do |f|
-    !(%w[common.h misc.c murmurhash3.c].include? File.basename(f))
+    !(%w[common.h misc.c].include? File.basename(f))
   end
   cp hat_files, 'ext/hat-trie'
   cp 'hat-trie/COPYING', 'ext/hat-trie'
