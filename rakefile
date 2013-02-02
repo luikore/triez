@@ -1,8 +1,10 @@
 require "fileutils"
 include FileUtils
 
+vendor_files = %w[hat-trie marisa-trie]
+
 desc "glob src for gem redist"
-task :glob_src do
+task :glob_src => vendor_files do
   hat_files = Dir.glob('hat-trie/src/*.{h,c}').select do |f|
     !(%w[common.h misc.c murmurhash3.c].include? File.basename(f))
   end
@@ -12,4 +14,10 @@ task :glob_src do
   system "rsync --delete -vur --exclude .svn/ marisa-trie/lib/marisa/ ext/marisa-trie/marisa"
   cp 'marisa-trie/lib/marisa.h', 'ext/marisa-trie'
   cp 'marisa-trie/COPYING', 'ext/marisa-trie'
+end
+
+desc "download vendor files"
+file vendor_files do
+  'git clone git://github.com/dcjones/hat-trie.git'
+  'svn checkout http://marisa-trie.googlecode.com/svn/trunk/ marisa-trie'
 end
