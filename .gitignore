@@ -1,3 +1,9 @@
 /hat-trie
 /marisa-trie
+*.o
+*.a
+*.so
+*.dll
+*.bundle
+Makefile
 

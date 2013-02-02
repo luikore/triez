@@ -1,6 +1,7 @@
 require "fileutils"
 include FileUtils
 
+vendor_lib = %w[ext/libtries.a]
 vendor_files = %w[hat-trie marisa-trie]
 
 desc "glob src for gem redist"
