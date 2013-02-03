@@ -31,8 +31,9 @@ struct HatTrie {
     hattrie_t* p;
     bool obj_value;
     bool suffix;
+    bool initialized;
 
-    HatTrie() : obj_value(false), suffix(false) {
+    HatTrie() : obj_value(false), suffix(false), initialized(false) {
         p = hattrie_create();
     }
 
@@ -77,8 +78,13 @@ static VALUE hat_alloc(VALUE self) {
 static VALUE hat_set_type(VALUE self, VALUE obj_value, VALUE suffix) {
     HatTrie* ht;
     Data_Get_Struct(self, HatTrie, ht);
+    if (ht->initialized) {
+        rb_raise(rb_eRuntimeError, "Already initialized");
+        return self;
+    }
     ht->obj_value = RTEST(obj_value);
     ht->suffix = RTEST(suffix);
+    ht->initialized = true;
     return self;
 }
 
@@ -91,6 +97,12 @@ static VALUE hat_size(VALUE self) {
 static VALUE hat_set(VALUE self, VALUE key, VALUE value) {
     PRE_HAT;
     hattrie_get(p, RSTRING_PTR(key), RSTRING_LEN(key))[0] = ht->obj_value ? value : NUM2LL(value);
+    return self;
+}
+
+static VALUE hat_append(VALUE self, VALUE key) {
+    PRE_HAT;
+    hattrie_get(p, RSTRING_PTR(key), RSTRING_LEN(key))[0] = ht->obj_value ? Qnil : 0;
     return self;
 }
 
@@ -180,6 +192,7 @@ void Init_triez() {
     DEF(hat_class, "size", hat_size, 0);
     DEF(hat_class, "has_key?", hat_check, 1);
     DEF(hat_class, "[]=", hat_set, 2);
+    DEF(hat_class, "<<", hat_append, 1);
     DEF(hat_class, "[]", hat_get, 1);
     DEF(hat_class, "delete", hat_del, 1);
     DEF(hat_class, "_internal_search", hat_search, 4);

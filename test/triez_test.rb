@@ -67,4 +67,14 @@ class TriezTest < Test::Unit::TestCase
       t.each
     end
   end
+
+  def test_append
+    t = Triez.new
+    ('a'..'z').each do |c|
+      t << c
+    end
+    assert_equal 26, t.size
+    assert_equal 0, t['c']
+    assert_equal true, t.has_key?('c')
+  end
 end
