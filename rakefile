@@ -5,9 +5,11 @@ include FileUtils
 so_file = "ext/triez.#{RbConfig::CONFIG['DLEXT']}"
 src_files = Dir.glob('ext/*.{h,c,cc}')
 vendor_files = %w[hat-trie marisa-trie]
+extconf = 'ext/extconf.rb'
+vendor_lib = 'ext/build/libtries.a'
 
 desc "glob src for gem redist"
-task :glob_src => vendor_files do
+task :glob_src => vendor_files + [:clean] do
   hat_files = Dir.glob('hat-trie/src/*.{h,c}').select do |f|
     !(%w[common.h misc.c].include? File.basename(f))
   end
@@ -21,7 +23,7 @@ end
 
 desc "download hat source"
 file 'hat-trie' do
-  sh 'git clone git://github.com/dcjones/hat-trie.git'
+  sh 'git clone git://github.com/luikore/hat-trie.git'
 end
 
 desc "download marisa source"
@@ -35,14 +37,20 @@ task :default => so_file do
 end
 
 desc "build ext"
-file so_file => src_files do
+file so_file => src_files + [extconf, vendor_lib] do
   cd 'ext'
+  sh 'ruby extconf.rb'
   sh 'make'
+  cd '..'
 end
+
+file extconf
+file vendor_lib
 
 desc "clean ext"
 task :clean do
   cd 'ext'
   sh 'make clean'
   rm Dir.glob 'build/*.{o,a}'
+  cd '..'
 end
