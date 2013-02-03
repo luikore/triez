@@ -89,22 +89,31 @@ static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE callback) {
 
     hattrie_iter_t* it = hattrie_iter_with_prefix(p, false, RSTRING_PTR(key), RSTRING_LEN(key));
     while (!hattrie_iter_finished(it)) {
+        if (vlimit != Qnil && limit-- <= 0) {
+            break;
+        }
         size_t suffix_len;
         const char* suffix_s = hattrie_iter_key(it, &suffix_len);
         value_t* v = hattrie_iter_val(it);
         VALUE suffix = rb_enc_str_new(suffix_s, suffix_len, u8_enc);
         rb_funcall(callback, rb_intern("call"), 2, suffix, LL2NUM(*v));
         hattrie_iter_next(it);
+        limit--;
     }
     hattrie_iter_free(it); // todo re-raise on error
     return Qnil;
 }
 
-static void valued_hat_mark(void* p) {
-    hattrie_t* t = (hattrie_t*)p;
-    /*
-    rb_gc_mark(v);
-    */
+static void valued_hat_mark(void* pp) {
+    hattrie_t* p = (hattrie_t*)pp;
+    hattrie_iter_t* it = hattrie_iter_begin(p, false);
+    while (!hattrie_iter_finished(it)) {
+        value_t* v = hattrie_iter_val(it);
+        if (!IMMEDIATE_P(*v)) {
+            rb_gc_mark(*v);
+        }
+    }
+    hattrie_iter_free(it);
 }
 
 static VALUE valued_hat_alloc(VALUE self) {
@@ -143,6 +152,29 @@ static VALUE valued_hat_del(VALUE self, VALUE key) {
     }
 }
 
+static VALUE valued_hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE callback) {
+    PRE_HAT;
+    long limit = 0;
+    if (vlimit != Qnil) {
+        limit = NUM2LONG(vlimit);
+    }
+
+    hattrie_iter_t* it = hattrie_iter_with_prefix(p, false, RSTRING_PTR(key), RSTRING_LEN(key));
+    while (!hattrie_iter_finished(it)) {
+        if (vlimit != Qnil && limit-- <= 0) {
+            break;
+        }
+        size_t suffix_len;
+        const char* suffix_s = hattrie_iter_key(it, &suffix_len);
+        value_t* v = hattrie_iter_val(it);
+        VALUE suffix = rb_enc_str_new(suffix_s, suffix_len, u8_enc);
+        rb_funcall(callback, rb_intern("call"), 2, suffix, *v);
+        hattrie_iter_next(it);
+    }
+    hattrie_iter_free(it); // todo re-raise on error
+    return Qnil;
+}
+
 static VALUE marisa_alloc(VALUE self) {
 
     return Qnil;
@@ -171,6 +203,7 @@ void Init_triez() {
     DEF(valued_hat_class, "[]=", valued_hat_set, 2);
     DEF(valued_hat_class, "[]", valued_hat_get, 1);
     DEF(valued_hat_class, "delete", valued_hat_del, 1);
+    DEF(hat_class, "_internal_search", valued_hat_search, 3);
 
     marisa_class = rb_define_class_under(triez, "MarisaTrie", rb_cObject);
     rb_define_alloc_func(marisa_class, marisa_alloc);

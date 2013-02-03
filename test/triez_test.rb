@@ -4,12 +4,12 @@ require_relative "../lib/triez"
 GC.stress
 
 class TriezTest < Test::Unit::TestCase
-  def test_hat_trie
-    t = Triez.hat
-    assert_equal Triez::HatTrie, t.class
+  def test_valued_hat_trie
+    t = Triez.valued_hat
+    assert_equal Triez::ValuedHatTrie, t.class
 
     v1 = (1 << 40)
-    v2 = (1 << 41)
+    v2 = (1 << 141)
     t['万塘路一锅鸡'] = v1
     t['万塘路'] = v2
     assert_equal v1, t['万塘路一锅鸡']
