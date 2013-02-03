@@ -4,7 +4,7 @@ include FileUtils
 
 so_file = "ext/triez.#{RbConfig::CONFIG['DLEXT']}"
 src_files = Dir.glob('ext/*.{h,c,cc}')
-vendor_files = %w[hat-trie marisa-trie]
+vendor_files = %w[hat-trie]
 extconf = 'ext/extconf.rb'
 vendor_lib = 'ext/build/libtries.a'
 
@@ -15,20 +15,11 @@ task :glob_src => vendor_files + [:clean] do
   end
   cp hat_files, 'ext/hat-trie'
   cp 'hat-trie/COPYING', 'ext/hat-trie'
-
-  system "rsync --delete -vur --exclude .svn/ marisa-trie/lib/marisa/ ext/marisa-trie/marisa"
-  cp 'marisa-trie/lib/marisa.h', 'ext/marisa-trie'
-  cp 'marisa-trie/COPYING', 'ext/marisa-trie'
 end
 
 desc "download hat source"
 file 'hat-trie' do
   sh 'git clone git://github.com/luikore/hat-trie.git'
-end
-
-desc "download marisa source"
-file 'marisa-trie' do
-  sh 'svn checkout http://marisa-trie.googlecode.com/svn/trunk/ marisa-trie'
 end
 
 desc "run tests"

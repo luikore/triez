@@ -1,11 +1,13 @@
 ## What
 
-This is Ruby binding for modern trie implementations, unicode aware, providing Hash-like API.
+Pragmatic trie for Ruby, fast, memory efficient, unicode aware.
+
+The backend is a cache oblivious data structure: the HAT trie.
 
 ## Requirement
 
 - Ruby 1.9
-- GCC or Clang
+- `g++` or `clang`
 
 ## Install
 
@@ -13,67 +15,146 @@ This is Ruby binding for modern trie implementations, unicode aware, providing H
 gem ins triez
 ```
 
-## Usage
+## Synopsis
 
 ``` ruby
 require 'triez'
-```
 
----
-
-HAT trie is mutable. It is faster than double array. It takes much less memory than just storing keys and values in a Hash.
-
-``` ruby
-hat = TrieX.hat
+t = Triez.new
 
 # insertion
 words.each do |word|
-  hat[word] = word.size
+  t[word] = word.size
 end
 
 # search
-hat.has_key? word
-hat[word]
+t.has_key? word
+t[word]
 
-# enumerate (ordered by alphabet)
-hat.each do |key, value|
+# enumerate (NOTE it is unordered)
+t.each do |key, value|
   ...
 end
-```
 
-And you can retrieve sub-tree with a prefix, suitable for prefix-based completions.
-
-``` ruby
-hat.search(prefix, limit: 10).each do |suffix, value|
+# iterate over values under a prefix.
+t.search_with_prefix(prefix, limit: 10, sort: true) do |suffix, value|
   ...
 end
 ```
 
 ---
 
-The default HAT trie stores integers within 64bits, it is good enough for weights, database ids... and takes 0 time in GC, and copy-on-write friendly.
-
-But there may be cases you want to store arbitrary objects in the nodes, then use this constructor instead:
+A triez stores integers within 64bits by default, good enough for weights, counts or database IDs, and doesn't cost any time in GC marking phase. In case you need to store arbitrary object value in a node:
 
 ``` ruby
-hat_trie = TrieX.valued_hat
+t = Triez.new obj_value: true
+t['Tom'] = {name: 'Tom', sex: 'Female'}
+t['Tree'] = [:leaf, :trunk, :root]
 ```
 
 ---
 
-MARISA trie is immutable, and provides **no** sub-tree walking API, but the memory footprint is extremely small (nearly as small as zipped).
+A suffix trie inserts all suffices of a key
 
 ``` ruby
-marisa = TrieX.marisa
+t = Triez.new suffix: true
+t['abcd'] = 2
+t['d']    #=> 2
+t['cd']   #=> 2
+t['bcd']  #=> 2
+t['abcd'] #=> 2
+```
 
-# insertion
+You can mutate values with a block
+
+``` ruby
+# v *= 5 for all suffices of 'abcd'
+t.set 'abcd' do |v|
+  v * 5
+end
+t['abcd'] #=> 10
+t['cd']   #=> 10
+```
+
+## Examples
+
+Prefix-based autocompletion:
+
+``` ruby
+words = %w[readme, rot, red, rah, rasterization]
+t = Triez.new
 words.each do |word|
-  marisa[word] = word.size
+  t[word] = 1
+end
+t.search_with_prefix 're' do |word|
+  puts "candidate: #{word}"
+end
+```
+
+The output:
+
+```bash
+candidate: readme
+candidate: red
+```
+
+---
+
+Efficiently search for strings containing a substring:
+
+``` ruby
+sequences = {
+  'ACTGAAAAAAACTG' => 1,
+  'ATACGGTCCA' => 2,
+  'GCTTGTACGT' => 3
+}
+t = Triez.new suffix: true
+sequences.each do |seq, id|
+  t[seq] = id
+end
+t.search_with_prefix 'CGGT' do |_, id|
+  puts id #=> 2
+end
+```
+
+Search time is linear to the length of the substring.
+
+---
+
+Find longest common substring:
+
+``` ruby
+sentences = %w[
+  万塘路一锅鸡
+  一锅鸡
+  文二路一锅鸡
+  来一锅鸡顶盒
+]
+
+t = Triez.new suffix: true
+sentences.each_with_index do |sentence, i|
+  t.alt sentence do |v|
+    v | (1 << i) # set the ith bit
+  end
 end
 
-# search
-marisa[word]
+lcs = ''
+matched = (1 << sentences.size) - 1 # all bits are set
+t.each do |k, v|
+  lcs = k if k.size > lcs.size and v == matched
+end
+lcs #=> '一锅鸡'
 ```
+
+## Benchmarks
+
+
+
+## Caveats
+
+`sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
+
+For some rare case of many threads modifying the same trie, you may need a mutex.
 
 ## License
 
