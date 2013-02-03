@@ -4,6 +4,15 @@ require_relative "../lib/triez"
 GC.stress
 
 class TriezTest < Test::Unit::TestCase
+  def test_init_options
+    t = Triez.new obj_value: true
+    assert_equal true, t.obj_value?
+    assert_equal false, t.suffix?
+    t = Triez.new suffix: true
+    assert_equal true, t.suffix?
+    assert_equal false, t.obj_value?
+  end
+
   def test_hat_trie
     t = Triez.new obj_value: true
 
@@ -76,5 +85,24 @@ class TriezTest < Test::Unit::TestCase
     assert_equal 26, t.size
     assert_equal 0, t['c']
     assert_equal true, t.has_key?('c')
+  end
+
+  def test_suffix_insert
+    t = Triez.new suffix: true
+    t << '12345'
+    assert_equal 5, t.size
+  end
+
+  def test_full_text_search
+    sequences = {
+      'ACTGAAAAAAACTG' => 1,
+      'ATACGGTCCA' => 2,
+      'GCTTGTACGT' => 3
+    }
+    t = Triez.new suffix: true
+    sequences.each do |seq, id|
+      t[seq] = id
+    end
+    assert_equal 2, t.search_with_prefix('CGGT').map(&:last).flatten.first
   end
 end

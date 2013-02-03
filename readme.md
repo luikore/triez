@@ -23,9 +23,10 @@ require 'triez'
 t = Triez.new
 
 # insertion
-words.each do |word|
-  t[word] = word.size
-end
+t[word] = an_int_within_64_bits
+
+# insert default value (0 for normal triez, nil for obj_valued triez) for key
+t << word
 
 # search
 t.has_key? word
@@ -68,12 +69,23 @@ t['abcd'] #=> 2
 You can mutate values with a block
 
 ``` ruby
-# v *= 5 for all suffices of 'abcd'
-t.set 'abcd' do |v|
+# v *= 5 for 'abcd', 'bcd', 'cd', 'd'
+t.alt 'abcd' do |v|
   v * 5
 end
 t['abcd'] #=> 10
 t['cd']   #=> 10
+```
+
+---
+
+Misc methods
+
+``` ruby
+# if it is a suffix trie
+t.suffix?
+# if the value type is object
+t.obj_value?
 ```
 
 ## Examples
@@ -119,43 +131,11 @@ end
 
 Search time is linear to the length of the substring.
 
----
-
-Find longest common substring:
-
-``` ruby
-sentences = %w[
-  万塘路一锅鸡
-  一锅鸡
-  文二路一锅鸡
-  来一锅鸡顶盒
-]
-
-t = Triez.new suffix: true
-sentences.each_with_index do |sentence, i|
-  t.alt sentence do |v|
-    v | (1 << i) # set the ith bit
-  end
-end
-
-lcs = ''
-matched = (1 << sentences.size) - 1 # all bits are set
-t.each do |k, v|
-  lcs = k if k.size > lcs.size and v == matched
-end
-lcs #=> '一锅鸡'
-```
-
 ## Benchmarks
 
 
 
 ## Caveats
 
-`sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
-
-For some rare case of many threads modifying the same trie, you may need a mutex.
-
-## License
-
-See the copying for HAT-trie and MARISA-trie
+- `sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
+- For some rare case of many threads modifying the same trie, you may need a mutex.
