@@ -30,10 +30,12 @@ static inline VALUE LL2V(long long l) {
 struct HatTrie {
     hattrie_t* p;
     bool obj_value;
-    HatTrie() {
-        obj_value = false;
+    bool suffix;
+
+    HatTrie() : obj_value(false), suffix(false) {
         p = hattrie_create();
     }
+
     ~HatTrie() {
         hattrie_free(p);
     }
@@ -72,10 +74,11 @@ static VALUE hat_alloc(VALUE self) {
     Check_Type(key, T_STRING);\
     key = unify_key(key);
 
-static VALUE hat_set_type(VALUE self, VALUE is_obj_value) {
+static VALUE hat_set_type(VALUE self, VALUE obj_value, VALUE suffix) {
     HatTrie* ht;
     Data_Get_Struct(self, HatTrie, ht);
-    ht->obj_value = RTEST(is_obj_value);
+    ht->obj_value = RTEST(obj_value);
+    ht->suffix = RTEST(suffix);
     return self;
 }
 
@@ -120,14 +123,28 @@ static VALUE hat_check(VALUE self, VALUE key) {
     return vt ? Qtrue : Qfalse;
 }
 
-static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE callback) {
+struct SearchCbData {
+    VALUE callback;
+    VALUE suffix;
+    VALUE value;
+};
+
+static VALUE hat_search_callback(VALUE data) {
+    SearchCbData* p = (SearchCbData*)data;
+    return rb_funcall(p->callback, rb_intern("call"), 2, p->suffix, p->value);
+}
+
+// returns: true if an error occured
+static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE vsort, VALUE callback) {
     PRE_HAT;
     long limit = 0;
     if (vlimit != Qnil) {
         limit = NUM2LONG(vlimit);
     }
 
-    hattrie_iter_t* it = hattrie_iter_with_prefix(p, false, RSTRING_PTR(key), RSTRING_LEN(key));
+    hattrie_iter_t* it = hattrie_iter_with_prefix(p, RTEST(vsort), RSTRING_PTR(key), RSTRING_LEN(key));
+    int error = 0;
+    SearchCbData data = {callback};
     while (!hattrie_iter_finished(it)) {
         if (vlimit != Qnil && limit-- <= 0) {
             break;
@@ -135,13 +152,18 @@ static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE callback) {
         size_t suffix_len;
         const char* suffix_s = hattrie_iter_key(it, &suffix_len);
         value_t* v = hattrie_iter_val(it);
-        volatile VALUE suffix = rb_enc_str_new(suffix_s, suffix_len, u8_enc);
-        volatile VALUE value = ht->obj_value ? (*v) : LL2NUM(*v);
-        rb_funcall(callback, rb_intern("call"), 2, suffix, value);
+        data.suffix = rb_enc_str_new(suffix_s, suffix_len, u8_enc);
+        data.value = ht->obj_value ? (*v) : LL2NUM(*v);
+        rb_protect(hat_search_callback, (VALUE)&data, &error);
+        if (error) {
+            break;
+        }
         hattrie_iter_next(it);
-        limit--;
     }
-    hattrie_iter_free(it); // todo re-raise on error
+    hattrie_iter_free(it);
+    if (error) {
+        rb_funcall(rb_mKernel, rb_intern("raise"), 0);
+    }
     return Qnil;
 }
 
@@ -154,11 +176,11 @@ void Init_triez() {
     bin_enc = rb_ascii8bit_encoding();
 
     rb_define_alloc_func(hat_class, hat_alloc);
-    DEF(hat_class, "_internal_set_type", hat_set_type, 1);
+    DEF(hat_class, "_internal_set_type", hat_set_type, 2);
     DEF(hat_class, "size", hat_size, 0);
     DEF(hat_class, "has_key?", hat_check, 1);
     DEF(hat_class, "[]=", hat_set, 2);
     DEF(hat_class, "[]", hat_get, 1);
     DEF(hat_class, "delete", hat_del, 1);
-    DEF(hat_class, "_internal_search", hat_search, 3);
+    DEF(hat_class, "_internal_search", hat_search, 4);
 }

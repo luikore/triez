@@ -4,9 +4,8 @@ require_relative "../lib/triez"
 GC.stress
 
 class TriezTest < Test::Unit::TestCase
-  def test_valued_hat_trie
-    t = Triez.valued_hat
-    assert_equal Triez::ValuedHatTrie, t.class
+  def test_hat_trie
+    t = Triez.new obj_value: true
 
     v1 = (1 << 40)
     v2 = (1 << 141)
@@ -22,27 +21,34 @@ class TriezTest < Test::Unit::TestCase
     assert_equal nil, t['万塘路一锅鸡']
     assert_equal v2, t['万塘路']
 
-    a = []
-    t._internal_search '', nil, -> k, v { a << [k, v] }
+    a = t.search_with_prefix ''
     assert_equal [['万塘路', v2]], a
 
-    a = []
     t['马当路'] = 3
-    t._internal_search '万塘', nil, -> k, v { a << [k, v] }
+    a = t.search_with_prefix '万塘'
     assert_equal [['路', v2]], a
   end
 
-  def test_iter
-    t = Triez.hat
-    ('A'..'z').each do |a|
+  def test_insertion_and_search_on_many_keys
+    t = Triez.new
+    as = ('A'..'z').to_a
+    bs = ('一'..'百').to_a
+    as.each do |a|
       # 10k chars to ensure burst
-      ('一'..'百').each do |b|
+      bs.each do |b|
         t[a + b] = 0
       end
     end
+    assert_equal as.size * bs.size, t.size
+
+    a = t.search_with_prefix 'a'
+    assert_equal bs.to_a, a.map(&:first).sort
 
     a = []
-    t._internal_search 'a', nil, -> k, v { a << k }
-    assert_equal ('一'..'百').to_a, a.sort
+    t.search_with_prefix 'b', sort: true, limit: 3 do |k, v|
+      a << k
+    end
+    assert_equal 3, a.size
+    assert_equal a, a.sort
   end
 end
