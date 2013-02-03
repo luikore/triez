@@ -51,4 +51,20 @@ class TriezTest < Test::Unit::TestCase
     assert_equal 3, a.size
     assert_equal a, a.sort
   end
+
+  def test_each_and_raise
+    t = Triez.new
+    t['abcd'] = 0
+    t['abc'] = 1
+
+    assert_raise NameError do
+      t.each do |k, v|
+        raise NameError, k
+      end
+    end
+
+    assert_raise ArgumentError do
+      t.each
+    end
+  end
 end

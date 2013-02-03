@@ -3,6 +3,9 @@ require_relative "../ext/triez"
 class Triez
   VERSION = '0.1'
 
+  private :_internal_set_type
+  private :_internal_search
+
   def initialize opts={}
     opts = opts.dup
     obj_value = opts.delete :obj_value
@@ -13,6 +16,11 @@ class Triez
       raise ArgumentError, "Unknown options: #{opts.keys.inspect}, only [:suffix, :obj_value] are allowed"
     end
     _internal_set_type obj_value, suffix
+  end
+
+  def each &p
+    raise ArgumentError, 'Need a block' unless p
+    _internal_search '', nil, true, p
   end
 
   def search_with_prefix prefix, opts={}, &p
@@ -28,7 +36,6 @@ class Triez
 
     if p
       _internal_search prefix, limit, sort, p
-      self
     else
       a = []
       _internal_search prefix, limit, sort, -> k, v {a << [k, v]}

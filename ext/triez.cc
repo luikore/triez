@@ -164,7 +164,7 @@ static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE vsort, VALUE 
     if (error) {
         rb_funcall(rb_mKernel, rb_intern("raise"), 0);
     }
-    return Qnil;
+    return self;
 }
 
 #define DEF(k,n,f,c) rb_define_method(k,n,RUBY_METHOD_FUNC(f),c)
