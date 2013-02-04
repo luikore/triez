@@ -4,7 +4,7 @@ Pragmatic [trie](http://en.wikipedia.org/wiki/Trie) for Ruby.
 
 It is fast, memory efficient, unicode aware.
 
-The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie). It is generally faster and more memory efficient than double arrays, burst tries.
+The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie). It is generally faster and more memory efficient than double arrays or burst tries.
 
 ## Requirement
 
@@ -167,5 +167,8 @@ NOTE: `trie/double array` -> https://github.com/tyler/trie
 ## Development
 
 ``` bash
-git clone 
+git clone git://github.com/luikore/triez.git
+cd triez
+rake glob_src
+rake
 ```
