@@ -29,11 +29,11 @@ static inline VALUE LL2V(long long l) {
 
 struct HatTrie {
     hattrie_t* p;
+    VALUE default_value;
     bool obj_value;
-    bool suffix;
     bool initialized;
 
-    HatTrie() : obj_value(false), suffix(false), initialized(false) {
+    HatTrie() : default_value(Qnil), obj_value(false), initialized(false) {
         p = hattrie_create();
     }
 
@@ -44,6 +44,9 @@ struct HatTrie {
 
 static void hat_mark(void* p_ht) {
     HatTrie* ht = (HatTrie*)p_ht;
+    if (!IMMEDIATE_P(ht->default_value)) {
+        rb_gc_mark(ht->default_value);
+    }
     if (!ht->obj_value) {
         return;
     }
@@ -75,29 +78,23 @@ static VALUE hat_alloc(VALUE self) {
     Check_Type(key, T_STRING);\
     key = unify_key(key);
 
-static VALUE hat_set_type(VALUE self, VALUE obj_value, VALUE suffix) {
+static VALUE hat_set_type(VALUE self, VALUE obj_value, VALUE default_value) {
     HatTrie* ht;
     Data_Get_Struct(self, HatTrie, ht);
     if (ht->initialized) {
         rb_raise(rb_eRuntimeError, "Already initialized");
         return self;
     }
+    ht->default_value = default_value;
     ht->obj_value = RTEST(obj_value);
-    ht->suffix = RTEST(suffix);
     ht->initialized = true;
     return self;
 }
 
-static VALUE hat_obj_value_p(VALUE self) {
+static VALUE hat_value_type(VALUE self) {
     HatTrie* ht;
     Data_Get_Struct(self, HatTrie, ht);
-    return ht->obj_value ? Qtrue : Qfalse;
-}
-
-static VALUE hat_suffix_p(VALUE self) {
-    HatTrie* ht;
-    Data_Get_Struct(self, HatTrie, ht);
-    return ht->suffix ? Qtrue : Qfalse;
+    return ht->obj_value ? ID2SYM(rb_intern("object")) : ID2SYM(rb_intern("int64"));
 }
 
 static VALUE hat_size(VALUE self) {
@@ -111,50 +108,58 @@ static VALUE hat_set(VALUE self, VALUE key, VALUE value) {
     long long v = ht->obj_value ? value : NUM2LL(value);
     char* s = RSTRING_PTR(key);
     size_t len = RSTRING_LEN(key);
-    if (ht->suffix) {
-        char* s_end = s + len;
-        long n;
-        for (; s < s_end; s += n, len -= n) {
-            n = rb_enc_mbclen(s, s_end, u8_enc);
-            hattrie_get(p, s, len)[0] = v;
-        }
-    } else {
-        hattrie_get(p, s, len)[0] = v;
-    }
+    hattrie_get(p, s, len)[0] = v;
     return self;
 }
 
-static VALUE hat_alt(VALUE self, VALUE key) {
+static inline void hat_change(HatTrie* ht, hattrie_t* p, char* s, size_t len) {
+    // NOTE must use 2-step change, because the block may change the trie
+    value_t* vp = hattrie_tryget(p, s, len);
+    long long v;
+    if (ht->obj_value) {
+        VALUE value = vp ? LL2V(vp[0]) : ht->default_value;
+        v = V2LL(rb_yield(value));
+    } else {
+        VALUE value = vp ? LL2NUM(vp[0]) : ht->default_value;
+        v = NUM2LL(rb_yield(value));
+    }
+    hattrie_get(p, s, len)[0] = v;
+}
+
+static inline void hat_change_prefix(HatTrie* ht, hattrie_t* p, char* s, size_t len, char* rs) {
+    char* rs_end = rs + len;
+    long n;
+    for (; rs < rs_end; rs += n, len -= n) {
+        hat_change(ht, p, s, len);
+        // no need check encoding because reverse succeeded
+        n = rb_enc_fast_mbclen(rs, rs_end, u8_enc);
+    }
+}
+
+static VALUE hat_change_all(VALUE self, VALUE type, VALUE key) {
     PRE_HAT;
     char* s = RSTRING_PTR(key);
     size_t len = RSTRING_LEN(key);
-    if (ht->suffix) {
+    ID ty = SYM2ID(type);
+    if (ty == rb_intern("suffix")) {
         char* s_end = s + len;
         long n;
         for (; s < s_end; s += n, len -= n) {
+            hat_change(ht, p, s, len);
             n = rb_enc_mbclen(s, s_end, u8_enc);
-            value_t* vp = hattrie_tryget(p, s, len);
-            long long v;
-            if (ht->obj_value) {
-                VALUE value = vp ? LL2V(vp[0]) : Qnil;
-                v = V2LL(rb_yield(value));
-            } else {
-                VALUE value = vp ? LL2NUM(vp[0]) : LL2NUM(0);
-                v = NUM2LL(rb_yield(value));
-            }
-            hattrie_get(p, s, len)[0] = v;
         }
-    } else {
-        value_t* vp = hattrie_tryget(p, s, len);
-        long long v;
-        if (ht->obj_value) {
-            VALUE value = vp ? LL2V(vp[0]) : Qnil;
-            v = V2LL(rb_yield(value));
-        } else {
-            VALUE value = vp ? LL2NUM(vp[0]) : LL2NUM(0);
-            v = NUM2LL(rb_yield(value));
+    } else if (ty == rb_intern("prefix")) {
+        volatile VALUE reversed = rb_funcall(key, rb_intern("reverse"), 0);
+        hat_change_prefix(ht, p, s, len, RSTRING_PTR(reversed));
+    } else if (ty == rb_intern("substring")) {
+        volatile VALUE reversed = rb_funcall(key, rb_intern("reverse"), 0);
+        char* rs = RSTRING_PTR(reversed);
+        char* s_end = s + len;
+        long n;
+        for (; s < s_end; s += n, len -= n) {
+            hat_change_prefix(ht, p, s, len, rs);
+            n = rb_enc_fast_mbclen(s, s_end, u8_enc);
         }
-        hattrie_get(p, s, len)[0] = v;
     }
     return self;
 }
@@ -162,7 +167,7 @@ static VALUE hat_alt(VALUE self, VALUE key) {
 static VALUE hat_append(VALUE self, VALUE key) {
     HatTrie* ht;
     Data_Get_Struct(self, HatTrie, ht);
-    return hat_set(self, key, ht->obj_value ? Qnil : LL2NUM(0));
+    return hat_set(self, key, ht->default_value);
 }
 
 static VALUE hat_get(VALUE self, VALUE key) {
@@ -171,7 +176,7 @@ static VALUE hat_get(VALUE self, VALUE key) {
     if (vt) {
         return ht->obj_value ? (*vt) : LL2NUM(*vt);
     } else {
-        return Qnil;
+        return ht->default_value;
     }
 }
 
@@ -184,7 +189,7 @@ static VALUE hat_del(VALUE self, VALUE key) {
         hattrie_del(p, RSTRING_PTR(key), RSTRING_LEN(key));
         return ht->obj_value ? (*vt) : LL2NUM(*vt);
     } else {
-        return Qnil;
+        return ht->default_value;
     }
 }
 
@@ -205,7 +210,6 @@ static VALUE hat_search_callback(VALUE data) {
     return rb_funcall(p->callback, rb_intern("call"), 2, p->suffix, p->value);
 }
 
-// returns: true if an error occured
 static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE vsort, VALUE callback) {
     PRE_HAT;
     long limit = 0;
@@ -248,14 +252,13 @@ void Init_triez() {
 
     rb_define_alloc_func(hat_class, hat_alloc);
     DEF(hat_class, "_internal_set_type", hat_set_type, 2);
-    DEF(hat_class, "obj_value?", hat_obj_value_p, 0);
-    DEF(hat_class, "suffix?", hat_suffix_p, 0);
+    DEF(hat_class, "value_type", hat_value_type, 0);
     DEF(hat_class, "size", hat_size, 0);
-    DEF(hat_class, "has_key?", hat_check, 1);
     DEF(hat_class, "[]=", hat_set, 2);
-    DEF(hat_class, "alt", hat_alt, 1);
+    DEF(hat_class, "change_all", hat_change_all, 2);
     DEF(hat_class, "<<", hat_append, 1);
     DEF(hat_class, "[]", hat_get, 1);
+    DEF(hat_class, "has_key?", hat_check, 1);
     DEF(hat_class, "delete", hat_del, 1);
     DEF(hat_class, "_internal_search", hat_search, 4);
 }
