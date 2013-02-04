@@ -18,7 +18,9 @@ end
 
 require "fileutils"
 include FileUtils
-cd File.dirname(__FILE__) + '/build'
+build_dir = File.dirname(__FILE__) + '/build'
+mkdir_p build_dir
+cd build_dir
 unless File.exist?('libtries.a')
   cc = ENV['CC'] || RbConfig::CONFIG['CC']
   cc = [cc, '-O3', '-c']
