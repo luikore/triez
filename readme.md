@@ -1,8 +1,8 @@
 ## What
 
-Pragmatic [trie](http://en.wikipedia.org/wiki/Trie) for Ruby.
+Pragmatic [tries](http://en.wikipedia.org/wiki/Trie) for Ruby, spelled in lolcat.
 
-It is fast, memory efficient, unicode aware.
+It is fast, memory efficient, unicode aware, prefix searchable.
 
 The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie). It is generally faster and more memory efficient than double arrays or burst tries.
 
@@ -22,40 +22,57 @@ gem ins triez
 ``` ruby
 require 'triez'
 
+# create triez
 t = Triez.new
+t = Triez.new suffix: true
+t = Triez.new obj_value: true
 
-# insertion
+# if it is a suffix trie
+t.suffix?
+
+# if the value type is object
+t.obj_value?
+
+# insert or change value
 t['key'] = 100
+
+# change value with proc
+t.alt 'key' do ||
+end
 
 # insert a key with default value (0 for normal triez, nil for obj_valued triez)
 t << 'key'
 
-# search
+# size of inserted keys
+t.size
+
+# search with exact match
 t.has_key? 'key'
 t['key']
 
-# iterate over values under a prefix.
+# prefixed search (iterate over values under a prefix), available options are:
+# - limit: max items, `nil` means no limit
+# - sort: whether iterate in alphabetic order, default is true
 t.search_with_prefix(prefix, limit: 10, sort: true) do |suffix, value|
   ...
 end
 
-# enumerate (NOTE it is unordered)
+# if no block given, an array in the form of [[suffix, value]] is returned
+t.search_with_prefix('prefix')
+
+# enumerate all keys and values in the order of binary collation
 t.each do |key, value|
   ...
 end
 ```
 
----
-
-By default, a *triez* stores signed integers within 64bits, you can use it as weights, counts or database IDs, and doesn't cost any time in GC marking phase. In case you need to store arbitrary object in a node, use `obj_value: true`:
+By default, *triez* store signed integers within 64bits, you can use them as weights, counts or database IDs. It won't cost any time in GC marking phase. In case you need to store arbitrary object in a node, use `obj_value: true`:
 
 ``` ruby
 t = Triez.new obj_value: true
 t['Tom'] = {name: 'Tom', sex: 'Female'}
 t['Tree'] = [:leaf, :trunk, :root]
 ```
-
----
 
 When a *triez* is initialized with `suffix: true`, it inserts all suffices of a key
 
@@ -70,7 +87,7 @@ t['锅鸡']    #=> 2
 t['鸡']     #=> 2
 ```
 
-You can batch change values with a block
+You can batch change values with `alt` and a block
 
 ``` ruby
 # v *= 5 for 'abcd', 'bcd', 'cd', 'd'
@@ -79,17 +96,6 @@ t.alt 'abcd' do |v|
 end
 t['abcd'] #=> 10
 t['cd']   #=> 10
-```
-
----
-
-Misc methods
-
-``` ruby
-# if it is a suffix trie
-t.suffix?
-# if the value type is object
-t.obj_value?
 ```
 
 ## Examples
@@ -114,8 +120,6 @@ The output:
 candidate: readme
 candidate: red
 ```
-
----
 
 Efficiently search for strings containing a substring:
 
@@ -162,7 +166,8 @@ NOTE: `trie/double array` -> https://github.com/tyler/trie
 
 - `sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
 - For some rare case of many threads modifying the same trie, you may need a mutex.
-- If you still feel memory not enough, you may consider [MARISA-trie](https://code.google.com/p/marisa-trie/) (NOTE that MARISA is immutable) or a database.
+- If you still feel memory not enough, you may consider [MARISA-trie](https://code.google.com/p/marisa-trie/) (note that MARISA is immutable) or a database.
+- It is not very efficient to use suffix trie to find longest common substring.
 
 ## Development
 
