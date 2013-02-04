@@ -148,14 +148,24 @@ ruby 1.9.3p374 (2013-01-15 revision 38858) [x86_64-darwin12.2.1]
 
 The test data is 3 milion titles of wikipedia articles (from http://dumps.wikimedia.org/enwiki/20121101/)
 
-                                                         | memory  | insertion time | 3 M query
----------------------------------------------------------|-------------------------------------
-hash/linked hash                                         | 340.2 M |    4.369 s     | 0.2800 s
-[trie/double array](https://github.com/tyler/trie)       | 155.6 M |    130.7 s     | 0.4359 s
-triez/HAT trie                                           | 121.7 M |    3.872 s     | 0.3472 s
+```
+thing/backend      | memory  | insertion time | 3 M query
+-------------------|---------|----------------|----------
+hash/linked hash   | 340.2 M |    4.369 s     | 0.2800 s
+trie/double array* | 155.6 M |    130.7 s     | 0.4359 s
+triez/HAT trie     | 121.7 M |    3.872 s     | 0.3472 s
+```
+
+NOTE: `trie/double array` -> https://github.com/tyler/trie
 
 ## Caveats
 
 - `sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
 - For some rare case of many threads modifying the same trie, you may need a mutex.
 - If you still feel memory not enough, you may consider [MARISA-trie](https://code.google.com/p/marisa-trie/) (NOTE that MARISA is immutable) or a database.
+
+## Development
+
+``` bash
+git clone 
+```
