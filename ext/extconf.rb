@@ -23,7 +23,7 @@ mkdir_p build_dir
 cd build_dir
 unless File.exist?('libtries.a')
   cc = ENV['CC'] || RbConfig::CONFIG['CC']
-  cc = [cc, '-O3', '-std=c99', '-Wall', '-pedantic', '-c']
+  cc = [cc, '-O3', '-std=c99', '-Wall', '-pedantic', '-fPIC', '-c']
   ar = RbConfig::CONFIG['AR']
   ar = 'ar' unless File.exist?(ar)
   sh *cc, '-I..', *Dir.glob("../hat-trie/*.c")
