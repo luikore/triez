@@ -91,8 +91,8 @@ t = Triez.new
 words.each do |word|
   t[word] = 1
 end
-t.search_with_prefix 're' do |word|
-  puts "candidate: #{word}"
+t.search_with_prefix 're' do |suffix|
+  puts "candidate: re#{suffix}"
 end
 ```
 
