@@ -4,7 +4,7 @@ Pragmatic [tries](http://en.wikipedia.org/wiki/Trie) for Ruby, spelled in lolcat
 
 It is fast, memory efficient, unicode aware, prefix searchable, and enchanced with prefix/suffix/substring keys.
 
-The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie) (In fact I'm using a [modified version](https://github.com/luikore/hat-trie) for improved functionality). HAT trie is generally faster and more memory efficient than [double array](http://linux.thai.net/~thep/datrie/datrie.html) or [burst trie](http://ww2.cs.mu.oz.au/~jz/fulltext/acmtois02.pdf).
+The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie) (In fact it is a [modified version](https://github.com/luikore/hat-trie) for improved functionality). HAT trie is generally faster and more memory efficient than [double array](http://linux.thai.net/~thep/datrie/datrie.html) or [burst trie](http://ww2.cs.mu.oz.au/~jz/fulltext/acmtois02.pdf).
 
 ## Requirement
 
