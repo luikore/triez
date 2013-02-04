@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "triez"
-  s.version = "0.3"
+  s.version = "1.0"
   s.author = "Zete Lui"
   s.homepage = "https://github.com/luikore/triez"
   s.platform = Gem::Platform::RUBY
