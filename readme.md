@@ -36,8 +36,9 @@ t.obj_value?
 # insert or change value
 t['key'] = 100
 
-# change value with proc
-t.alt 'key' do ||
+# change value with block
+t.alt 'key' do |old_value|
+  new_value
 end
 
 # insert a key with default value (0 for normal triez, nil for obj_valued triez)
@@ -100,7 +101,7 @@ t['cd']   #=> 10
 
 ## Examples
 
-Prefix-based autocompletion:
+**Prefix-based autocompletion**:
 
 ``` ruby
 require 'triez'
@@ -121,7 +122,7 @@ candidate: readme
 candidate: red
 ```
 
-Efficiently search for strings containing a substring:
+**Efficiently search for strings containing a substring (full text searching)**:
 
 ``` ruby
 require 'triez'
@@ -139,7 +140,7 @@ t.search_with_prefix 'CGGT' do |_, id|
 end
 ```
 
-The search time is linear to the length of the substring.
+The searching time is linear to the length of the substring.
 
 ## Benchmarks
 
@@ -167,7 +168,7 @@ NOTE: `trie/double array` -> https://github.com/tyler/trie
 - `sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
 - For some rare case of many threads modifying the same trie, you may need a mutex.
 - If you still feel memory not enough, you may consider [MARISA-trie](https://code.google.com/p/marisa-trie/) (note that MARISA is immutable) or a database.
-- It is not very efficient to use suffix trie to find longest common substring.
+- It is not very efficient to use this suffix trie to find longest common substring.
 
 ## Development
 
