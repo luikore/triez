@@ -116,9 +116,9 @@ sequences = {
 }
 t = Triez.new
 
-# build suffix trie
+# build suffix tree
 sequences.each do |seq, id|
-  t.change_all :suffix, [seq] = id
+  t.change_all(:suffix, seq){id}
 end
 
 t.search_with_prefix 'CGGT' do |_, id|
