@@ -1,7 +1,7 @@
 require_relative "../ext/triez"
 
 class Triez
-  VERSION = '0.1'
+  VERSION = '0.2'
 
   private :_internal_set_type
   private :_internal_search
