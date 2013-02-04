@@ -105,4 +105,12 @@ class TriezTest < Test::Unit::TestCase
     end
     assert_equal 2, t.search_with_prefix('CGGT').map(&:last).flatten.first
   end
+
+  def test_nul_char_in_keys
+    t = Triez.new
+    t["a\0b"] = 1
+    assert_equal 1, t["a\0b"]
+    assert_equal 1, t.size
+    assert_equal nil, t["a"]
+  end
 end
