@@ -2,9 +2,9 @@
 
 Pragmatic [tries](http://en.wikipedia.org/wiki/Trie) for Ruby, spelled in lolcat.
 
-It is fast, memory efficient, unicode aware, prefix searchable.
+It is fast, memory efficient, unicode aware, prefix searchable, and enchanced with prefix/suffix/substring keys.
 
-The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie). It is generally faster and more memory efficient than double arrays or burst tries.
+The backend of *triez* is a cache oblivious data structure: the [HAT trie](https://github.com/dcjones/hat-trie) (In fact I'm using a [modified version](https://github.com/luikore/hat-trie) for improved functionality). HAT trie is generally faster and more memory efficient than [double array](http://linux.thai.net/~thep/datrie/datrie.html) or [burst trie](http://ww2.cs.mu.oz.au/~jz/fulltext/acmtois02.pdf).
 
 ## Requirement
 
@@ -24,25 +24,30 @@ require 'triez'
 
 # create triez
 t = Triez.new
-t = Triez.new suffix: true
-t = Triez.new obj_value: true
 
-# if it is a suffix trie
-t.suffix?
+# the above code is equivalent to :int64 for :value_type and 0 for :default
+t = Triez.new value_type: :int64
 
-# if the value type is object
-t.obj_value?
+# more flexible with object type [*see note below]
+t = Triez.new value_type: :object
+
+# get the value type
+t.value_type
+
+# set a different default value
+t = Triez.new value_type: :object, default: 'hello'
 
 # insert or change value
 t['key'] = 100
 
-# change value with block
-t.alt 'key' do |old_value|
-  new_value
-end
-
-# insert a key with default value (0 for normal triez, nil for obj_valued triez)
+# insert a key with default value
 t << 'key'
+
+# batch change values under all suffices/prefices/substrings of a key
+t.change_all(:suffix, 'key') {|old_value| ...calculate new value }
+t.change_all(:prefix, 'key') {|old_value| ...calculate new value }
+# enumerates all occurences of substrings of the key
+t.change_all(:substring, 'key') {|old_value| ...calculate new value }
 
 # size of inserted keys
 t.size
@@ -67,7 +72,7 @@ t.each do |key, value|
 end
 ```
 
-By default, *triez* store signed integers within 64bits, you can use them as weights, counts or database IDs. It won't cost any time in GC marking phase. In case you need to store arbitrary object in a node, use `obj_value: true`:
+\* Note: By default, *triez* store signed integers within 64bits, you can use them as weights, counts or database IDs. In case you need to store arbitrary object in a node, use `obj_value: true`:
 
 ``` ruby
 t = Triez.new obj_value: true
@@ -75,33 +80,9 @@ t['Tom'] = {name: 'Tom', sex: 'Female'}
 t['Tree'] = [:leaf, :trunk, :root]
 ```
 
-When a *triez* is initialized with `suffix: true`, it inserts all suffices of a key
-
-``` ruby
-t = Triez.new suffix: true
-t['万塘路一锅鸡'] = 2
-t['万塘路一锅鸡'] #=> 2
-t['塘路一锅鸡'] #=> 2
-t['路一锅鸡']  #=> 2
-t['一锅鸡']   #=> 2
-t['锅鸡']    #=> 2
-t['鸡']     #=> 2
-```
-
-You can batch change values with `alt` and a block
-
-``` ruby
-# v *= 5 for 'abcd', 'bcd', 'cd', 'd'
-t.alt 'abcd' do |v|
-  v * 5
-end
-t['abcd'] #=> 10
-t['cd']   #=> 10
-```
-
 ## Examples
 
-**Prefix-based autocompletion**:
+**Prefix based autocompletion**:
 
 ``` ruby
 require 'triez'
@@ -122,7 +103,9 @@ candidate: readme
 candidate: red
 ```
 
-**Efficiently search for strings containing a substring (full text searching)**:
+---
+
+**Efficient [full text search](https://en.wikipedia.org/wiki/Full_text_search) with a [suffix tree](https://en.wikipedia.org/wiki/Suffix_tree)**:
 
 ``` ruby
 require 'triez'
@@ -131,10 +114,13 @@ sequences = {
   'ATACGGTCCA' => 2,
   'GCTTGTACGT' => 3
 }
-t = Triez.new suffix: true
+t = Triez.new
+
+# build suffix trie
 sequences.each do |seq, id|
-  t[seq] = id
+  t.change_all :suffix, [seq] = id
 end
+
 t.search_with_prefix 'CGGT' do |_, id|
   puts id #=> 2
 end
@@ -142,7 +128,45 @@ end
 
 The searching time is linear to the length of the substring.
 
-## Benchmarks
+---
+
+**Solve the [longest common substring problem](https://en.wikipedia.org/wiki/Longest_common_substring_problem)**:
+
+``` ruby
+# coding: utf-8
+require 'triez'
+sentences = %w[
+  万塘路一锅鸡
+  去文二路一锅鸡吃饭
+  来一锅鸡顶盒
+  一锅鸡胗
+]
+
+# value is bitset representing id of the sentence
+# in ruby we can use integers of arbitrary length as bitsets
+t = Triez.new value_type: :object, default: 0
+
+sentences.each_with_index do |sentence, i|
+  elem = 1 << i
+  t.change_all :substring, sentence do |v|
+    # union
+    v | elem
+  end
+end
+
+# longest common substring
+lcs = ''
+
+# find the key tagged with universe
+universe = (1 << sentences.size) - 1
+t.each do |k, v|
+  lcs = k if k.size > lcs.size and v == universe
+end
+
+puts lcs #=> 一锅鸡
+```
+
+## Benchmark
 
 Here's a benchmark on
 
@@ -151,24 +175,23 @@ ruby 1.9.3p374 (2013-01-15 revision 38858) [x86_64-darwin12.2.1]
 2.3 GHz Intel Core i7
 ```
 
-The test data is 3 milion titles of wikipedia articles (from http://dumps.wikimedia.org/enwiki/20121101/)
+The test data are 3 milion titles of wikipedia articles (from http://dumps.wikimedia.org/enwiki/20121101/)
 
 ```
-thing/backend      | memory  | insertion time | 3 M query
--------------------|---------|----------------|----------
-hash/linked hash   | 340.2 M |    4.369 s     | 0.2800 s
-trie/double array* | 155.6 M |    130.7 s     | 0.4359 s
-triez/HAT trie     | 121.7 M |    3.872 s     | 0.3472 s
+thing/backend           | memory  | insertion time | 3 M query
+------------------------|---------|----------------|----------
+hash/linked hash        | 340.2 M |    4.369 s     | 0.2800 s
+fast_trie/double array* | 155.6 M |    130.7 s     | 0.4359 s
+triez/HAT trie          | 121.7 M |    3.872 s     | 0.3472 s
 ```
 
-NOTE: `trie/double array` -> https://github.com/tyler/trie
+Note: `trie/double array` -> https://github.com/tyler/trie
 
 ## Caveats
 
-- `sort` orders keys with binary collation, not unicode codepoint collation in string comparison.
+- The `sort` option in prefixed search orders keys with binary [collation](https://en.wikipedia.org/wiki/Collation), but string comparison in Ruby is with unicode codepoint collation.
 - For some rare case of many threads modifying the same trie, you may need a mutex.
-- If you still feel memory not enough, you may consider [MARISA-trie](https://code.google.com/p/marisa-trie/) (note that MARISA is immutable) or a database.
-- It is not very efficient to use this suffix trie to find longest common substring.
+- If you still feel memory not enough, you may consider [MARISA-trie](https://code.google.com/p/marisa-trie/) (note that MARISA is immutable), or a database.
 
 ## Development
 
@@ -178,3 +201,7 @@ cd triez
 rake glob_src
 rake
 ```
+
+## Note
+
+Although HAT trie uses MurMurHash3 instead of SipHash in Ruby, It is still safe under hashDoS because bucket size is limited.
