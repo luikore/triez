@@ -1,4 +1,7 @@
-## What
+## Triez
+
+[![Build Status](https://travis-ci.org/luikore/triez.png)](https://travis-ci.org/luikore/triez)
+[![Code Climate](https://codeclimate.com/github/luikore/triez.png)](https://codeclimate.com/github/luikore/triez)
 
 Pragmatic [tries](http://en.wikipedia.org/wiki/Trie) for Ruby, spelled in lolcat.
 
