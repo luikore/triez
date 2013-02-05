@@ -11,7 +11,7 @@ The backend of *triez* is a cache oblivious data structure: the [HAT trie](https
 
 ## Requirement
 
-- Ruby 1.9
+- CRuby 1.9 / 2.0
 - `g++` or `clang`
 
 ## Install
@@ -188,7 +188,7 @@ fast_trie/double array* | 155.6 M |    130.7 s     | 0.4359 s
 triez/HAT trie          | 121.7 M |    3.872 s     | 0.3472 s
 ```
 
-Note: `trie/double array` -> https://github.com/tyler/trie
+Note: `fast_trie/double array` -> https://github.com/tyler/trie
 
 ## Caveats
 
