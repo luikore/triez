@@ -75,10 +75,10 @@ t.each do |key, value|
 end
 ```
 
-\* Note: By default, *triez* store signed integers within 64bits, you can use them as weights, counts or database IDs. In case you need to store arbitrary object in a node, use `obj_value: true`:
+\* Note: By default, *triez* store signed integers within 64bits, you can use them as weights, counts or database IDs. In case you need to store arbitrary object in a node, use `value_type: :object`:
 
 ``` ruby
-t = Triez.new obj_value: true
+t = Triez.new value_type: :object
 t['Tom'] = {name: 'Tom', sex: 'Female'}
 t['Tree'] = [:leaf, :trunk, :root]
 ```
