@@ -2,6 +2,11 @@
 #include <ruby.h>
 #include <ruby/encoding.h>
 
+// for rubinius
+#ifndef rb_enc_fast_mbclen
+#   define rb_enc_fast_mbclen rb_enc_mbclen
+#endif
+
 static VALUE hat_class;
 static rb_encoding* u8_enc;
 static rb_encoding* bin_enc;

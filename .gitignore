@@ -9,4 +9,4 @@ Makefile
 .DS_Store
 benchmark
 *.gem
-
+.rbx
