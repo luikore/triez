@@ -42,7 +42,9 @@ file vendor_lib
 desc "clean ext"
 task :clean do
   cd 'ext'
-  sh 'make clean'
+  if File.exist?('Makefile')
+    sh 'make clean'
+  end
   rm Dir.glob 'build/*.{o,a}'
   cd '..'
 end
