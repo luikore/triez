@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/luikore/triez.png)](https://travis-ci.org/luikore/triez)
 [![Code Climate](https://codeclimate.com/github/luikore/triez.png)](https://codeclimate.com/github/luikore/triez)
+[![Gem Version](https://badge.fury.io/rb/triez.png)](http://badge.fury.io/rb/triez)
 
 Pragmatic [tries](http://en.wikipedia.org/wiki/Trie) for Ruby, spelled in lolcat.
 
