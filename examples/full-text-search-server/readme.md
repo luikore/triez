@@ -1,4 +1,4 @@
-A simple prove-of-concept full text search server with *triez* and *sqlite*
+A simple proof-of-concept full text search server with *triez* and *sqlite*
 
 required gems:
 
