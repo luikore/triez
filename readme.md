@@ -130,7 +130,7 @@ t.search_with_prefix 'CGGT' do |_, id|
 end
 ```
 
-The searching time is linear to the length of the substring. You may also be interested in the example of a simple [full text search server](https://github.com/luikore/triez/examples/full-text-search-server) with *triez*.
+The searching time is linear to the length of the substring. You may also be interested in the example of a simple [full text search server](https://github.com/luikore/triez/tree/master/examples/full-text-search-server) with *triez*.
 
 ---
 
