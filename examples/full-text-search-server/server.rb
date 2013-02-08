@@ -1,11 +1,8 @@
 # coding: utf-8
 
-ENV['RACK_ENV'] = 'production'
-
 require "triez"
 require 'sqlite3'
-require "rack"
-require "thin"
+require "drb/drb"
 require "fileutils"
 FileUtils.cd File.dirname(__FILE__)
 
@@ -23,14 +20,17 @@ class Server
 
   def load_index
     count, _ = DB.execute('select count(*) from phrases;').first
-    puts "loading #{count} phrases from db"
+    print "loading #{count} phrases from db "
+    time = Time.now
     last_id = 0
     (count / 30000 + 1).times do |i|
+      print '.'
       DB.execute('select id, phrase from phrases where id > ? limit 30000;', last_id).each do |(id, phrase)|
-        INDEX.change_all(:suffix, phrase) { id }
+        INDEX.change_all(:suffix, phrase.to_s) { id }
         last_id = id
       end
     end
+    puts " loaded in #{Time.now - time} seconds"
   end
 
   def init_table
@@ -58,14 +58,13 @@ class Server
     end
   end
 
-  def insert input
-    doc_id, phrases = input
+  def insert doc_id, phrases
     DB.transaction do
       phrases.each do |ph|
         insert_phrase doc_id, ph
       end
     end
-    puts "#{phrases.size} phrases inserted for #{doc_id}"
+    nil
   end
 
   def query phrase
@@ -82,21 +81,7 @@ class Server
       h.keys
     end
   end
-
-  def call env
-    input = env['rack.input'].read
-    case env['REQUEST_PATH']
-    when '/a'
-      insert Marshal.load input
-      [200, {"Content-Length" => '0'}, ['']]
-    when '/q'
-      r = Marshal.dump query input
-      [200, {"Content-Length" => r.bytesize.to_s}, [r]]
-    end
-  rescue
-    r = $!.message
-    [500, {"Content-Length" => r.bytesize}, [r]]
-  end
 end
 
-Rack::Handler::Thin.run Server.new, Port: 9292
+DRb.start_service 'druby://localhost:8787', Server.new
+DRb.thread.join

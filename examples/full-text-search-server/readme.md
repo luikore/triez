@@ -1,9 +1,9 @@
-A simple proof-of-concept full text search server with *triez* and *sqlite*
+A simple proof-of-concept full text search server with *triez*, *sqlite* and *drb*
 
-required gems:
+install required gems:
 
 ``` ruby
-gem ins triez sqlite3 rack thin
+gem ins triez sqlite3
 ```
 
 start server:
@@ -16,7 +16,7 @@ client usage:
 
 ```ruby
 require './client'
-c = Client.new 'localhost', 9292
+c = Client.new 'localhost', 8787
 c.insert id, document_content
 c.query a_phrase
 ```
