@@ -1,4 +1,4 @@
 # only for travis-ci
-source :rubygems
+source 'https://rubygems.org'
 
 gem 'rake'
