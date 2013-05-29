@@ -1,0 +1,4 @@
+1.0.1
+
+2013-05-30
+  fix extconf.rb for mkmf of ruby-head
