@@ -1,6 +1,7 @@
 require "mkmf"
 
 $CFLAGS << ' -Ihat-trie'
+$CPPFLAGS << ' -Ihat-trie'
 $LDFLAGS << ' -Lbuild -ltries'
 create_makefile 'triez'
 
