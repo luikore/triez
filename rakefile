@@ -20,7 +20,7 @@ end
 
 desc "download hat source"
 file 'hat-trie' do
-  sh 'git clone git://github.com/luikore/hat-trie.git'
+  sh 'git', 'clone', 'git://github.com/luikore/hat-trie.git'
 end
 
 desc "run tests"
@@ -30,10 +30,10 @@ end
 
 desc "build ext"
 file so_file => src_files + [extconf, vendor_lib] do
-  cd 'ext'
-  sh 'ruby extconf.rb'
-  sh 'make'
-  cd '..'
+  Dir.chdir 'ext' do
+    sh 'ruby', 'extconf.rb'
+    sh 'make'
+  end
 end
 
 file extconf
@@ -41,10 +41,10 @@ file vendor_lib
 
 desc "clean ext"
 task :clean do
-  cd 'ext'
-  if File.exist?('Makefile')
-    sh 'make clean'
+  Dir.chdir 'ext' do
+    if File.exist?('Makefile')
+      sh 'make', 'clean'
+    end
+    rm Dir.glob 'build/*.{o,a}'
   end
-  rm Dir.glob 'build/*.{o,a}'
-  cd '..'
 end
