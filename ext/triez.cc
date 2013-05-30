@@ -62,6 +62,7 @@ static void hat_mark(void* p_ht) {
         if (!IMMEDIATE_P(*v)) {
             rb_gc_mark(*v);
         }
+        hattrie_iter_next(it);
     }
     hattrie_iter_free(it);
 }

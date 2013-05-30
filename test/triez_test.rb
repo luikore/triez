@@ -163,16 +163,16 @@ class TriezTest < Test::Unit::TestCase
       /users/12/edit
       /posts
     ]
-    t = Triez.new
+    t = Triez.new value_type: :object
     urls.each_with_index do |url, i|
-      t[url] = i
+      t[url] = i.to_s
     end
 
     k, v = t.longest_match '/users/12/delete'
-    assert_equal ['/users/', 0], [k, v]
+    assert_equal ['/users/', '0'], [k, v]
 
     k, v = t.longest_match '/users/12/edit?utf8=true'
-    assert_equal ['/users/12/edit', 1], [k, v]
+    assert_equal ['/users/12/edit', '1'], [k, v]
 
     k, v = t.longest_match '/post'
     assert_equal [nil, nil], [k, v]
@@ -183,6 +183,9 @@ class TriezTest < Test::Unit::TestCase
 
     k, v = t.longest_match ''
     assert_equal [nil, nil], [k, v]
+
+    # try to trigger rb_gc_mark(), it can stuck if hattrie_iter_next() not called properly
+    100000.times{ 'a' + 'b' }
   end
 
   def test_solve_longest_common_substring
