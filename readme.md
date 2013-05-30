@@ -74,6 +74,9 @@ t.search_with_prefix('prefix')
 t.each do |key, value|
   ...
 end
+
+# return a longest key and its value, such that, the key is prefix of string
+key, value = t.longest_match string
 ```
 
 \* Note: By default, *triez* store signed integers within 64bits, you can use them as weights, counts or database IDs. In case you need to store arbitrary object in a node, use `value_type: :object`:

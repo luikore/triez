@@ -247,6 +247,20 @@ static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE vsort, VALUE 
     return self;
 }
 
+VALUE hat_longest_match(VALUE self, VALUE key) {
+    PRE_HAT;
+    size_t len = (size_t)RSTRING_LEN(key);
+    value_t* vt = hattrie_tryget_longest_match(p, RSTRING_PTR(key), &len);
+    if (vt) {
+        volatile VALUE r = rb_ary_new();
+        rb_ary_push(r, rb_funcall(key, rb_intern("byteslice"), 2, INT2FIX(0), ULONG2NUM(len)));
+        rb_ary_push(r, (ht->obj_value ? (*vt) : LL2NUM(*vt)));
+        return r;
+    } else {
+        return Qnil;
+    }
+}
+
 #define DEF(k,n,f,c) rb_define_method(k,n,RUBY_METHOD_FUNC(f),c)
 
 extern "C"
@@ -266,4 +280,5 @@ void Init_triez() {
     DEF(hat_class, "has_key?", hat_check, 1);
     DEF(hat_class, "delete", hat_del, 1);
     DEF(hat_class, "_internal_search", hat_search, 4);
+    DEF(hat_class, "longest_match", hat_longest_match, 1);
 }
