@@ -206,6 +206,13 @@ rake glob_src
 rake
 ```
 
+To update vendor lib and re-compile:
+
+``` bash
+rake glob_src
+rake
+```
+
 ## Note
 
 Although HAT trie uses MurMurHash3 instead of SipHash in Ruby, It is still safe under hashDoS because bucket size is limited.
