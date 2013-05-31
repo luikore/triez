@@ -1,10 +1,11 @@
 language: ruby
-rvm:
-  - 1.9.3
-  - 1.9.2
-  - ruby-head
 script: rake glob_src && rake
 matrix:
+  rvm:
+    - 1.9.3
+    - 1.9.2
+    - ruby-head
+    - rbx-19mode
   allow_failures:
     rvm:
       - rbx-19mode
