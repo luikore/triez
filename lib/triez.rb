@@ -1,5 +1,15 @@
 require_relative "../ext/triez"
 
+# backport for 1.9.2
+unless ''.respond_to?(:byteslice)
+  class String
+    def byteslice *xs
+      enc = encoding
+      dup.force_encoding('binary').slice(*xs).force_encoding enc
+    end
+  end
+end
+
 class Triez
   VERSION = '1.0.2'
 
