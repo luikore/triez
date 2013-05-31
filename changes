@@ -1,9 +1,9 @@
 1.0.2
 
+2013-06-01
+  add #walk
 2013-05-31
-  add #longest_match
   fix rb_gc_mark() stuck for value_type: :object
-  backport String#byteslice for 1.9.2
 
 1.0.1
 
