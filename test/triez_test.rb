@@ -157,7 +157,7 @@ class TriezTest < Test::Unit::TestCase
     assert_equal %w[a b c ab bc abc].sort, keys.sort
   end
 
-  def test_longest_match
+  def test_walk
     urls = %w[
       /users/
       /users/12/edit
@@ -168,21 +168,18 @@ class TriezTest < Test::Unit::TestCase
       t[url] = i.to_s
     end
 
-    k, v = t.longest_match '/users/12/delete'
-    assert_equal ['/users/', '0'], [k, v]
-
-    k, v = t.longest_match '/users/12/edit?utf8=true'
-    assert_equal ['/users/12/edit', '1'], [k, v]
-
-    k, v = t.longest_match '/post'
-    assert_equal [nil, nil], [k, v]
+    assert_equal [%w'/users/ 0'], t.walk('/users/12/delete').to_a
+    assert_equal [%w'/users/ 0', %w'/users/12/edit 1'], t.walk('/users/12/edit').to_a
+    assert_equal [%w'/users/ 0', %w'/users/12/edit 1'], t.walk('/users/12/edit/3').to_a
 
     assert_raise TypeError do
-      t.longest_match :'/post'
+      t.walk :'/post' do
+      end
     end
 
-    k, v = t.longest_match ''
-    assert_equal [nil, nil], [k, v]
+    t.walk '' do |k, v|
+      assert_equal [nil, nil], [k, v]
+    end
 
     # try to trigger rb_gc_mark(), it can stuck if hattrie_iter_next() not called properly
     100000.times{ 'a' + 'b' }

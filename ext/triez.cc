@@ -248,18 +248,28 @@ static VALUE hat_search(VALUE self, VALUE key, VALUE vlimit, VALUE vsort, VALUE 
     return self;
 }
 
-VALUE hat_longest_match(VALUE self, VALUE key) {
+typedef struct {
+    bool obj_value;
+    VALUE arr;
+} HatWalkData;
+
+static int hat_walk_cb(const char* key, size_t len, value_t* v, void* data_p) {
+    HatWalkData* data = (HatWalkData*)data_p;
+    volatile VALUE r = rb_ary_new();
+    rb_ary_push(r, rb_str_new(key, len));
+    rb_ary_push(r, data->obj_value ? (*v) : LL2NUM(*v));
+    rb_ary_push(data->arr, r);
+    return hattrie_walk_continue;
+}
+
+static VALUE hat_walk(VALUE self, VALUE key) {
     PRE_HAT;
     size_t len = (size_t)RSTRING_LEN(key);
-    value_t* vt = hattrie_tryget_longest_match(p, RSTRING_PTR(key), &len);
-    if (vt) {
-        volatile VALUE r = rb_ary_new();
-        rb_ary_push(r, rb_funcall(key, rb_intern("byteslice"), 2, INT2FIX(0), ULONG2NUM(len)));
-        rb_ary_push(r, (ht->obj_value ? (*vt) : LL2NUM(*vt)));
-        return r;
-    } else {
-        return Qnil;
-    }
+    volatile HatWalkData data = {ht->obj_value, rb_ary_new()};
+
+    // to prevent leak by break/next, we have to collect the array first
+    hattrie_walk(p, RSTRING_PTR(key), len, (void*)&data, hat_walk_cb);
+    return data.arr;
 }
 
 #define DEF(k,n,f,c) rb_define_method(k,n,RUBY_METHOD_FUNC(f),c)
@@ -281,5 +291,5 @@ void Init_triez() {
     DEF(hat_class, "has_key?", hat_check, 1);
     DEF(hat_class, "delete", hat_del, 1);
     DEF(hat_class, "_internal_search", hat_search, 4);
-    DEF(hat_class, "longest_match", hat_longest_match, 1);
+    DEF(hat_class, "_internal_walk", hat_walk, 1);
 }
