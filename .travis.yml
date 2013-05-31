@@ -4,3 +4,7 @@ rvm:
   - 1.9.2
   - ruby-head
 script: rake glob_src && rake
+matrix:
+  allow_failures:
+    rvm:
+      - rbx-19mode
