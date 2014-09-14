@@ -213,4 +213,11 @@ class TriezTest < Test::Unit::TestCase
     end
     assert_equal '一锅鸡', lcs
   end
+
+  def test_should_not_segfault_when_search_with_prefix
+    t = Triez.new
+    # bursts when 16384
+    16_385.times{ |i| t["a#{i}"] = rand(10)+1 }
+    t.search_with_prefix("a")
+  end
 end
