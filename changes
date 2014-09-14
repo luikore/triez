@@ -1,3 +1,8 @@
+1.0.3
+
+2014-09-14
+  fix a segfault. see https://github.com/luikore/triez/issues/3. thanks @canadaduane for reporting this.
+
 1.0.2
 
 2013-06-01
