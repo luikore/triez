@@ -29,7 +29,7 @@ end
 
 desc "run tests"
 task :default => so_file do
-  require_relative "test/triez_test.rb"
+  sh 'ruby', "test/triez_test.rb"
 end
 
 desc "build ext"
