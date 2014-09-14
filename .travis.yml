@@ -3,10 +3,12 @@ script: rake glob_src && rake
 rvm:
   - 1.9.3
   - 1.9.2
+  - 2.1.0
   - ruby-head
   - rbx-19mode
   - rbx-head
 matrix:
   allow_failures:
+    - rvm: ruby-head
     - rvm: rbx-19mode
     - rvm: rbx-head
