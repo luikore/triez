@@ -217,7 +217,9 @@ class TriezTest < Test::Unit::TestCase
   def test_should_not_segfault_when_search_with_prefix
     t = Triez.new
     # bursts when 16384
-    16_385.times{ |i| t["a#{i}"] = rand(10)+1 }
-    t.search_with_prefix("a")
+    16_385.times{ |i| t["a#{i}"] = i }
+    expected_postfices = 16_385.times.map &:to_s
+    actual_postfices = t.search_with_prefix("a").map(&:first)
+    assert_equal expected_postfices.sort, actual_postfices.sort
   end
 end
