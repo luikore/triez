@@ -1,3 +1,8 @@
+1.0.4
+
+2014-09-15
+  fix returning result of search_with_prefix on trie node. see https://github.com/luikore/triez/issues/3.
+
 1.0.3
 
 2014-09-14
