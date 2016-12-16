@@ -1,3 +1,8 @@
+1.0.5
+
+2016-12-16
+  fix sudo gem install in macOS Sierra
+
 1.0.4
 
 2014-09-15
