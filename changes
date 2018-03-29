@@ -1,3 +1,7 @@
+1.0.6
+2018-03-29
+  fix build error when `$(AR)` is set to `libtool -static`
+
 1.0.5
 
 2016-12-16

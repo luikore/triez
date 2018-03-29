@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = "triez"
-  s.version = "1.0.5"
-  s.author = "Zete Lui"
+  s.version = "1.0.6"
+  s.author = "luikore"
   s.homepage = "https://github.com/luikore/triez"
   s.platform = Gem::Platform::RUBY
   s.summary = "fast, efficient, unicode aware HAT trie with prefix / suffix support"
