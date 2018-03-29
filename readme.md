@@ -26,10 +26,17 @@ gem ins triez
 ``` ruby
 require 'triez'
 
-# create triez
+# create triez with (default value type) int64, and setting default value 0
 t = Triez.new
 
-# the above code is equivalent to :int64 for :value_type and 0 for :default
+# The default value is 0
+t['foo'] #=> 0
+
+# available options for value_type:
+# - :int64  -- signed 64 bit integer
+# - :object -- ruby object, but note that:
+#              if the object is beyond simple types like NilClass, TrueClass, Integer,
+#              it will take additional heap space
 t = Triez.new value_type: :int64
 
 # more flexible with object type [*see note below]
